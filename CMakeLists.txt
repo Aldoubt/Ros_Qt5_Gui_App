@@ -43,3 +43,4 @@ option(AGT_BUILD_TESTS "Build AGT HMI tests" OFF)
 
 # modules
 add_subdirectory(src)
+ament_package()

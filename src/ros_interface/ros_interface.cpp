@@ -5,7 +5,6 @@
 #include <cmath>
 
 AgtRosInterface::AgtRosInterface(QObject *p) : QObject(p) {
-  if (!rclcpp::ok()) rclcpp::init(0, nullptr);
   node_ = std::make_shared<rclcpp::Node>("agt_robot_hmi");
   auto qos = rclcpp::QoS(1).transient_local().reliable();
   node_->create_subscription<nav_msgs::msg::OccupancyGrid>("/map", qos,
