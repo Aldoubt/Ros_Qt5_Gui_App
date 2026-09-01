@@ -9,6 +9,7 @@ class InspectionTaskViewer : public QWidget {
  public:
   explicit InspectionTaskViewer(QWidget *parent = nullptr);
   void setTask(const InspectionTask &task);
+  void setStatus(const QString &status);
  signals: void pointSelected(const InspectionPoint &point);
  private: QListWidget *list_; QLabel *status_;
 };
