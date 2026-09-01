@@ -1,0 +1,5 @@
+add_library(agt_ros_interface ros_interface.cpp ros_interface.h)
+target_include_directories(agt_ros_interface PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(agt_ros_interface Qt5::Core)
+ament_target_dependencies(agt_ros_interface rclcpp geometry_msgs nav_msgs sensor_msgs std_msgs std_srvs tf2 tf2_geometry_msgs cv_bridge)
+set_target_properties(agt_ros_interface PROPERTIES AUTOMOC ON)

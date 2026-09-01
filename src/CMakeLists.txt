@@ -1,6 +1,4 @@
-add_subdirectory(common)
-add_subdirectory(basic)
 add_subdirectory(core)
-add_subdirectory(channel)
-add_subdirectory(app)
-
+add_subdirectory(ros_interface)
+add_subdirectory(widgets)
+add_subdirectory(plugins/inspection)

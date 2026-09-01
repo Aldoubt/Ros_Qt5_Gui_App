@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(ros_qt5_gui_app VERSION 0.0.1)
+project(agt_robot_hmi VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake;${CMAKE_MODULE_PATH}")
 get_filename_component(PROJECT_ROOT "${CMAKE_CURRENT_LIST_DIR}" ABSOLUTE)
@@ -14,6 +14,7 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_AUTOMOC ON)
 
 if(WIN32)
   set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
@@ -24,24 +25,21 @@ if(MSVC)
 endif()
 
 # 依赖
-include(Getnlohmann)
-include(GetDockWidget)
-include(GetYamlCpp)
-include(GTestHelper)
-find_package(Qt5 COMPONENTS Core REQUIRED)
-find_package(Boost REQUIRED COMPONENTS filesystem)
-find_package(Eigen3 REQUIRED)
+find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
+find_package(ament_cmake REQUIRED)
+find_package(yaml-cpp REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(cv_bridge REQUIRED)
 
 # options
-option(BUILD_WITH_CHANNEL_AUTO ON)
-option(BUILD_WITH_CHANNEL_ROS1 OFF)
-option(BUILD_WITH_CHANNEL_ROS2 OFF)
-option(BUILD_WITH_CHANNEL_ROSBRIDGE OFF)
-option(BUILD_WITH_TEST OFF)
-
-set(BUILD_WITH_CHANNEL_AUTO ON)
-enable_testing()
+option(AGT_BUILD_TESTS "Build AGT HMI tests" OFF)
 
 # modules
 add_subdirectory(src)
-add_subdirectory(install)
