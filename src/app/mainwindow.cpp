@@ -30,6 +30,7 @@
 #include "ui_mainwindow.h"
 #include <QButtonGroup>
 #include <QMessageBox>
+#include <QDockWidget>
 
 #include "widgets/speed_ctrl.h"
 #include "widgets/display_config_widget.h"
@@ -1052,6 +1053,11 @@ void MainWindow::setupUi() {
   connect(display_manager_->GetDisplay(DISPLAY_MAP),
           SIGNAL(signalCursorPose(QPointF)), this,
           SLOT(signalCursorPose(QPointF)));
+
+  inspection_panel_ = new InspectionPanel(this);
+  auto *inspection_dock = new QDockWidget(tr("Inspection Task"), this);
+  inspection_dock->setWidget(inspection_panel_);
+  addDockWidget(Qt::RightDockWidgetArea, inspection_dock);
 }
 
 bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
@@ -1099,7 +1105,8 @@ void MainWindow::signalCursorPose(QPointF pos) {
   }
 }
 
-//============================================================================
+// Inspection is an application plugin: it is hosted by the original HMI and
+// communicates through its own runtime adapter, without changing DisplayManager.
 void MainWindow::closeEvent(QCloseEvent *event) {
   // Delete dock manager here to delete all floating widgets. This ensures
   // that all top level windows of the dock manager are properly closed

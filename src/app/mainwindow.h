@@ -37,6 +37,7 @@
 #include "widgets/speed_ctrl.h"
 #include "widgets/ratio_layouted_frame.h"
 #include "core/framework/framework.h"
+#include "../plugins/inspection/inspection_panel.h"
 #include <memory>
 #include <vector>
 QT_BEGIN_NAMESPACE
@@ -91,6 +92,7 @@ class MainWindow : public QMainWindow {
   DisplayConfigWidget *display_config_widget_{nullptr};
   ads::CDockWidget *settings_dock_{nullptr};
   DiagnosticDockWidget *diagnostic_dock_widget_{nullptr};
+  InspectionPanel *inspection_panel_{nullptr};
   ads::CDockWidget *diagnostic_dock_{nullptr};
   
  signals:
