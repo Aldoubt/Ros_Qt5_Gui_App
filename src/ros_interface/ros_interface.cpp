@@ -1,4 +1,5 @@
 #include "ros_interface.h"
+#include "agt_topics.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <cmath>
@@ -25,11 +26,11 @@ AgtRosInterface::AgtRosInterface(QObject *p) : QObject(p) {
         emit visionResultReceived(o["point_id"].toString(), o["result"].toString(),
                                    o["confidence"].toDouble(), o["image_path"].toString());
       });
-  task_request_ = node_->create_publisher<std_msgs::msg::String>("/agt/task/request", 10);
-  task_start_ = node_->create_client<std_srvs::srv::Trigger>("/agt/task/start");
-  task_pause_ = node_->create_client<std_srvs::srv::Trigger>("/agt/task/pause");
-  task_cancel_ = node_->create_client<std_srvs::srv::Trigger>("/agt/task/cancel");
-  navigation_goal_ = node_->create_publisher<std_msgs::msg::String>("/agt/navigation/go_point", 10);
+  task_request_ = node_->create_publisher<std_msgs::msg::String>(agt_topics::task_request, 10);
+  task_start_ = node_->create_client<std_srvs::srv::Trigger>(agt_topics::task_start);
+  task_pause_ = node_->create_client<std_srvs::srv::Trigger>(agt_topics::task_pause);
+  task_cancel_ = node_->create_client<std_srvs::srv::Trigger>(agt_topics::task_cancel);
+  navigation_goal_ = node_->create_publisher<std_msgs::msg::String>(agt_topics::navigation_go_point, 10);
   executor_.add_node(node_);
   thread_ = std::thread([this] { spin(); });
 }
