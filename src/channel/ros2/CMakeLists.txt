@@ -17,6 +17,7 @@ find_package(tf2_geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(diagnostic_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
+find_package(fastcdr REQUIRED CONFIG)
 find_package(Boost REQUIRED COMPONENTS thread)
 
 add_library(${TARGET_NAME} SHARED

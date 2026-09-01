@@ -18,8 +18,10 @@ elseif(BUILD_WITH_CHANNEL_ROS1 STREQUAL "ON")
     add_subdirectory(ros1)
 endif()
 
-message("build ROSBridge channel")
-add_subdirectory(rosbridge)
+if(BUILD_WITH_CHANNEL_ROSBRIDGE STREQUAL "ON")
+    message("build ROSBridge channel")
+    add_subdirectory(rosbridge)
+endif()
 
 #manager
 find_package(Boost REQUIRED COMPONENTS filesystem)
