@@ -28,4 +28,6 @@ cmake-build*
 *.vbproj.vssscc.filters
 *.vbproj.vssver.scc
 *.vbproj.vssver.scc.filters
-
+config.json
+state.ini
+*.log
