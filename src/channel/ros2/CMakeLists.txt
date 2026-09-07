@@ -3,8 +3,10 @@ set(TARGET_NAME channel_ros2)
 # 包含topology_msgs获取脚本
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/GetTopologyMsg.cmake)
 
-file(GLOB_RECURSE SOURCE_FILE  CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR} *.cpp *.cc)
-file(GLOB_RECURSE INCLUDE_FILE CONFIGURE_DEPENDS  ${CMAKE_SOURCE_DIR}  *.h *.hpp)
+# This plugin must compile only its own transport sources. Scanning the source
+# root accidentally pulls the Qt application into a dynamically loaded channel.
+file(GLOB_RECURSE SOURCE_FILE  CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR} *.cpp *.cc)
+file(GLOB_RECURSE INCLUDE_FILE CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR} *.h *.hpp)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)

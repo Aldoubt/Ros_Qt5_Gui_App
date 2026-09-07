@@ -35,12 +35,16 @@ find_package(ament_cmake REQUIRED)
 find_package(fastcdr REQUIRED CONFIG)
 
 # options
-option(BUILD_WITH_CHANNEL_AUTO ON)
-option(BUILD_WITH_CHANNEL_ROS1 OFF)
-option(BUILD_WITH_CHANNEL_ROS2 ON)
-option(BUILD_WITH_CHANNEL_ROSBRIDGE OFF)
-option(BUILD_WITH_TEST OFF)
+# `option()` requires a help string before its default value. The previous
+# declarations treated ON/OFF as help text, leaving every cache option OFF and
+# silently compiling an HMI without its ROS2 transport plugin.
+option(BUILD_WITH_CHANNEL_AUTO "Select a channel from the ROS environment" OFF)
+option(BUILD_WITH_CHANNEL_ROS1 "Build the ROS1 transport plugin" OFF)
+option(BUILD_WITH_CHANNEL_ROS2 "Build the ROS2 transport plugin" ON)
+option(BUILD_WITH_CHANNEL_ROSBRIDGE "Build the ROSBridge transport plugin" OFF)
+option(BUILD_WITH_TEST "Build HMI tests" OFF)
 set(BUILD_WITH_CHANNEL_AUTO OFF)
+set(BUILD_WITH_CHANNEL_ROS2 ON)
 enable_testing()
 
 # modules

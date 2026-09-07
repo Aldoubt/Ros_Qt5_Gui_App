@@ -239,6 +239,7 @@ void SceneManager::AddPointAtRobotPosition() {
            << robot_pose.x << ", " << robot_pose.y << ", " << robot_pose.theta 
            << ") -> map pose(" << map_pose.x << ", " << map_pose.y << ", " << map_pose.theta << ")");
   LOG_INFO("Total points: " << topology_map_.points.size());
+  emit signalTopologyMapUpdate(topology_map_);
   
   curr_handle_display_ = goal_point;
 }
@@ -310,6 +311,7 @@ void SceneManager::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) {
                << ") -> world pose(" << world_pose.x << ", " << world_pose.y << ", " << world_pose.theta
                << ") -> map pose(" << map_pose.x << ", " << map_pose.y << ", " << map_pose.theta << ")");
       LOG_INFO("Total points: " << topology_map_.points.size());
+      emit signalTopologyMapUpdate(topology_map_);
       curr_handle_display_ = goal_point;
     } break;
     case MapEditMode::kErase: {
@@ -1136,6 +1138,7 @@ void SceneManager::createTopologyLine(const QString &from, const QString &to) {
     
     LOG_INFO("创建拓扑连接: " << from.toStdString() << " -> " << to.toStdString() 
              << (is_part_of_bidirectional ? " (双向)" : " (单向)"));
+    emit signalTopologyMapUpdate(topology_map_);
   } else {
     LOG_ERROR("无法找到连接点位: " << from.toStdString() << " 或 " << to.toStdString());
   }

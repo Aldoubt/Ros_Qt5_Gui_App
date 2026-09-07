@@ -389,6 +389,10 @@ void MainWindow::setupUi() {
   save_map_btn->setIconSize(QSize(20, 20));
   save_map_btn->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
   save_map_btn->setStyleSheet(modernToolButtonStyle);
+  // Map Packages are immutable once published. Editing must use \"另存为\"
+  // and be promoted as a new version by agt_map_manager.
+  save_map_btn->setEnabled(false);
+  save_map_btn->setToolTip("正式地图包不可直接覆盖；请使用“另存为”创建编辑版本");
   horizontalLayout_tools->addWidget(save_map_btn);
 
   QIcon icon7;
@@ -1054,10 +1058,6 @@ void MainWindow::setupUi() {
           SIGNAL(signalCursorPose(QPointF)), this,
           SLOT(signalCursorPose(QPointF)));
 
-  inspection_panel_ = new InspectionPanel(this);
-  auto *inspection_dock = new QDockWidget(tr("Inspection Task"), this);
-  inspection_dock->setWidget(inspection_panel_);
-  addDockWidget(Qt::RightDockWidgetArea, inspection_dock);
 }
 
 bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
@@ -1115,6 +1115,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
   disconnect(this, SIGNAL(OnRecvChannelData(const MsgId &, const std::any &)),
              this, SLOT(RecvChannelMsg(const MsgId &, const std::any &)));
   SaveState();
+  closeChannel();
   dock_manager_->deleteLater();
   QMainWindow::closeEvent(event);
   LOG_INFO("ros qt5 gui app close!");

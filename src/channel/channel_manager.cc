@@ -42,7 +42,11 @@ std::string ChannelManager::NormalizeStoredChannelType(const std::string &raw) {
 }
 
 ChannelManager::ChannelManager() {}
-ChannelManager::~ChannelManager() {}
+ChannelManager::~ChannelManager() {
+  CloseChannel();
+  delete library_channel_;
+  library_channel_ = nullptr;
+}
 
 std::string ChannelManager::GetChannelPath(const std::string &channel_type) {
   fs::path libDir = boost::dll::program_location().parent_path() / "lib";
@@ -172,9 +176,11 @@ bool ChannelManager::OpenChannel(const std::string &path) {
   return true;
 }
 void ChannelManager::CloseChannel() {
-  channel_ptr_->ShutDown();
-  delete channel_ptr_;
-  channel_ptr_ = nullptr;
+  if (channel_ptr_ != nullptr) {
+    channel_ptr_->ShutDown();
+    delete channel_ptr_;
+    channel_ptr_ = nullptr;
+  }
 }
 VirtualChannelNode *ChannelManager::GetChannel() {
   [[unlikely]] if (channel_ptr_ == nullptr) {

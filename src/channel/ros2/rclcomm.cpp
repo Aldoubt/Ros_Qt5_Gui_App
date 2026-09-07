@@ -7,6 +7,8 @@
  * @Description: ros2通讯类
  */
 #include "rclcomm.h"
+#include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <chrono>
 #include <tf2/LinearMath/Quaternion.h>
@@ -41,7 +43,9 @@ rclcomm::rclcomm() {
   Config::ConfigManager::Instance()->StoreConfig();
 }
 bool rclcomm::Start() {
-  rclcpp::init(0, nullptr);
+  if (!rclcpp::ok()) {
+    rclcpp::init(0, nullptr);
+  }
   m_executor = new rclcpp::executors::MultiThreadedExecutor;
 
   node = rclcpp::Node::make_shared("ros_qt5_gui_app");
@@ -204,7 +208,20 @@ bool rclcomm::Start() {
 }
 
 bool rclcomm::Stop() {
-  rclcpp::shutdown();
+  init_flag_ = false;
+  if (m_executor != nullptr) {
+    if (node) {
+      m_executor->remove_node(node);
+    }
+    delete m_executor;
+    m_executor = nullptr;
+  }
+  transform_listener_.reset();
+  tf_buffer_.reset();
+  node.reset();
+  if (rclcpp::ok()) {
+    rclcpp::shutdown();
+  }
   return true;
 }
 
@@ -325,7 +342,7 @@ void rclcomm::local_path_callback(const nav_msgs::msg::Path::SharedPtr msg) {
 
 /// @brief loop for rate
 void rclcomm::Process() {
-  if (rclcpp::ok()) {
+  if (init_flag_ && m_executor != nullptr && rclcpp::ok()) {
     m_executor->spin_some();
     getRobotPose();
   }
@@ -426,51 +443,57 @@ void rclcomm::localCostMapCallback(
   double roll, pitch, yaw;
   mat.getRPY(roll, pitch, yaw);
   double origin_theta = yaw;
-  basic::OccupancyMap cost_map(height, width,
-                               Eigen::Vector3d(origin_x, origin_y, 0),
-                               msg->info.resolution);
-  for (int i = 0; i < msg->data.size(); i++) {
-    int x = (int)i / width;
-    int y = i % width;
-    cost_map(x, y) = msg->data[i];
-  }
-  cost_map.SetFlip();
   basic::OccupancyMap sized_cost_map = occ_map_;
-  basic::RobotPose origin_pose;
-  try {
-    // 坐标变换 将局部代价地图的基础坐标转换为map下 进行绘制显示
-    geometry_msgs::msg::PoseStamped pose_map_frame;
-    geometry_msgs::msg::PoseStamped pose_curr_frame;
-    pose_curr_frame.pose.position.x = origin_x;
-    pose_curr_frame.pose.position.y = origin_y;
-    q.setRPY(0, 0, origin_theta);
-    pose_curr_frame.pose.orientation = tf2::toMsg(q);
-    pose_curr_frame.header.frame_id = msg->header.frame_id;
-    tf_buffer_->transform(pose_curr_frame, pose_map_frame, "map");
-    tf2::fromMsg(pose_map_frame.pose.orientation, q);
-    tf2::Matrix3x3 mat(q);
-    double roll, pitch, yaw;
-    mat.getRPY(roll, pitch, yaw);
+  sized_cost_map.map_data.setZero();
 
-    origin_pose.x = pose_map_frame.pose.position.x;
-    origin_pose.y = pose_map_frame.pose.position.y + cost_map.heightMap();
-    origin_pose.theta = yaw;
+  try {
+    // A Nav2 local costmap is a grid in msg->header.frame_id (normally odom).
+    // Its origin orientation and the map<-odom transform both rotate the grid.
+    // Transforming only the origin causes a visual offset whenever either yaw
+    // is non-zero, so project every source cell centre into the map grid.
+    const auto map_from_costmap = tf_buffer_->lookupTransform(
+        "map", msg->header.frame_id, tf2::TimePointZero);
+    tf2::Transform map_from_source;
+    tf2::fromMsg(map_from_costmap.transform, map_from_source);
+
+    const double cos_origin = std::cos(origin_theta);
+    const double sin_origin = std::sin(origin_theta);
+    const double source_resolution = msg->info.resolution;
+    const double map_resolution = occ_map_.map_config.resolution;
+    const int data_size = std::min<int>(
+        static_cast<int>(msg->data.size()), width * height);
+
+    for (int index = 0; index < data_size; ++index) {
+      const int cost = msg->data[index];
+      if (cost <= 0) {
+        continue;
+      }
+
+      const int source_row = index / width;
+      const int source_col = index % width;
+      const double local_x = (static_cast<double>(source_col) + 0.5) * source_resolution;
+      const double local_y = (static_cast<double>(source_row) + 0.5) * source_resolution;
+      const tf2::Vector3 source_point(
+          origin_x + cos_origin * local_x - sin_origin * local_y,
+          origin_y + sin_origin * local_x + cos_origin * local_y, 0.0);
+      const tf2::Vector3 map_point = map_from_source * source_point;
+
+      const int target_col = static_cast<int>(std::floor(
+          (map_point.x() - occ_map_.map_config.origin[0]) / map_resolution));
+      // OccupancyMap stores display rows top-to-bottom after SetFlip().
+      const int target_row = occ_map_.rows - 1 - static_cast<int>(std::floor(
+          (map_point.y() - occ_map_.map_config.origin[1]) / map_resolution));
+      if (target_row < 0 || target_col < 0 ||
+          target_row >= sized_cost_map.rows || target_col >= sized_cost_map.cols) {
+        continue;
+      }
+      sized_cost_map(target_row, target_col) = std::max(
+          sized_cost_map(target_row, target_col), cost);
+    }
   } catch (tf2::TransformException &ex) {
     LOG_ERROR("getTransform localCostMapCallback error:" << ex.what());
+    return;
   }
-
-  double map_o_x, map_o_y;
-  occ_map_.xy2OccPose(origin_pose.x, origin_pose.y, map_o_x, map_o_y);
-  sized_cost_map.map_data.setZero();
-  for (int x = 0; x < occ_map_.rows; x++)
-    for (int y = 0; y < occ_map_.cols; y++) {
-      if (x > map_o_x && y > map_o_y && y < map_o_y + cost_map.rows &&
-          x < map_o_x + cost_map.cols) {
-        sized_cost_map(x, y) = cost_map(x - map_o_x, y - map_o_y);
-      } else {
-        sized_cost_map(x, y) = 0;
-      }
-    }
   PUBLISH(MSG_ID_LOCAL_COST_MAP, sized_cost_map);
 }
 void rclcomm::map_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg) {

@@ -4,12 +4,41 @@
 #include <QHeaderView>
 #include <QLabel>
 #include <QPushButton>
+#include <QSignalBlocker>
 #include <QtConcurrent>
+#include <set>
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include "algorithm.h"
 #include "config/config_manager.h"
 #include "logger/logger.h"
+
+namespace {
+
+void PopulatePointCombo(QComboBox *combo_box,
+                        const std::vector<TopologyMap::PointInfo> &points,
+                        const QString &selected_name) {
+  if (combo_box == nullptr) {
+    return;
+  }
+
+  QSignalBlocker blocker(combo_box);
+  combo_box->clear();
+  combo_box->addItem("");
+
+  std::set<std::string> seen_names;
+  for (const auto &point : points) {
+    if (!point.name.empty() && seen_names.insert(point.name).second) {
+      combo_box->addItem(QString::fromStdString(point.name));
+    }
+  }
+
+  const int selected_index = combo_box->findText(selected_name);
+  combo_box->setCurrentIndex(selected_index >= 0 ? selected_index : 0);
+}
+
+}  // namespace
+
 NavGoalTableView::NavGoalTableView(QWidget *_parent_widget)
     : QTableView(_parent_widget) {
   table_model_ = new QStandardItemModel();
@@ -43,6 +72,13 @@ void NavGoalTableView::onItemChanged(QStandardItem *item) {
 }
 void NavGoalTableView::UpdateTopologyMap(const TopologyMap &_topology_map) {
   topologyMap_ = _topology_map;
+  for (int row = 0; row < table_model_->rowCount(); ++row) {
+    auto *combo_box = qobject_cast<QComboBox *>(
+        indexWidget(table_model_->index(row, 0)));
+    if (combo_box != nullptr) {
+      PopulatePointCombo(combo_box, topologyMap_.points, combo_box->currentText());
+    }
+  }
 }
 void NavGoalTableView::UpdateSelectPoint(const TopologyMap::PointInfo &point) {
   if (!this->isEnabled())
@@ -58,11 +94,7 @@ void NavGoalTableView::UpdateSelectPoint(const TopologyMap::PointInfo &point) {
 }
 void NavGoalTableView::AddItem() {
   QComboBox *comboBox = new QComboBox();
-  for (auto point : topologyMap_.points) {
-    comboBox->addItem(point.name.c_str());
-  }
-  comboBox->addItem("");
-  comboBox->setCurrentText("");
+  PopulatePointCombo(comboBox, topologyMap_.points, "");
   QLabel *label_status = new QLabel("None");
   QPushButton *button_remove = new QPushButton("Delete");
   QPushButton *button_run = new QPushButton("Run");

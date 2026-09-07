@@ -40,8 +40,10 @@ class VirtualChannelNode {
   }
   void ShutDown() {
     run_flag_ = false;
+    if (process_thread_.joinable()) {
+      process_thread_.join();
+    }
     Stop();
-    process_thread_.join();
   }
   virtual ~VirtualChannelNode() {}
   virtual void Process() {}

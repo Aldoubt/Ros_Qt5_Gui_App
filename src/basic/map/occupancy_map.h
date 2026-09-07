@@ -28,6 +28,7 @@
 #include <Eigen/Dense>
 #include <boost/filesystem.hpp>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -52,9 +53,12 @@ struct MapConfig {
   double resolution = 0.1;
   std::vector<double> origin;
   int negate{0};
-  double occupied_thresh{0.25};
-  double free_thresh{0.65};
-  MapMode mode;
+  // Nav2 map YAML thresholds are probabilities.  A map reconstructed from
+  // /map has no threshold fields, so retain the standard Nav2 defaults when
+  // it is saved back out by the HMI.
+  double occupied_thresh{0.65};
+  double free_thresh{0.25};
+  MapMode mode{TRINARY};
   MapConfig() {
     origin.resize(3);
   }
@@ -146,7 +150,15 @@ struct MapConfig {
   void Save(const std::string &filename) {
     std::ofstream file(filename);
     if (file.is_open()) {
+      const char *mode_name = "trinary";
+      if (mode == SCALE) {
+        mode_name = "scale";
+      } else if (mode == RAW) {
+        mode_name = "raw";
+      }
+      file << std::setprecision(17);
       file << "image: " << image << std::endl;
+      file << "mode: " << mode_name << std::endl;
       file << "resolution: " << resolution << std::endl;
       file << "origin: [" << origin[0] << ", " << origin[1] << ", " << origin[2] << "]" << std::endl;
       file << "negate: " << negate << std::endl;

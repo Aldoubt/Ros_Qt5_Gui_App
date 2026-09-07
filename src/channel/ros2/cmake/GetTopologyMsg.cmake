@@ -24,19 +24,25 @@ if(NOT topology_msgs_POPULATED)
   
   foreach(TARGET_NAME ${TOPOLOGY_MSGS_TARGETS})
     if(TARGET ${TARGET_NAME})
-      set_target_properties(${TARGET_NAME} PROPERTIES
-        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
-      )
-      
-      install(TARGETS ${TARGET_NAME}
-        RUNTIME DESTINATION bin/lib
-        LIBRARY DESTINATION bin/lib
-        ARCHIVE DESTINATION bin/lib
-      )
+      get_target_property(TARGET_TYPE ${TARGET_NAME} TYPE)
+      # rosidl_generator_cpp is an INTERFACE_LIBRARY. It is linkable but has
+      # no file to install; passing it to install(TARGETS) breaks Humble's
+      # ament symlink-install generator expression handling.
+      if(NOT TARGET_TYPE STREQUAL "INTERFACE_LIBRARY")
+        set_target_properties(${TARGET_NAME} PROPERTIES
+          LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+          RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+        )
+
+        install(TARGETS ${TARGET_NAME}
+          RUNTIME DESTINATION bin/lib
+          LIBRARY DESTINATION bin/lib
+          ARCHIVE DESTINATION bin/lib
+        )
+      endif()
     endif()
   endforeach()
 endif()
 
 # import targets:
-# topology_msgs::topology_msgs 
+# topology_msgs::topology_msgs
