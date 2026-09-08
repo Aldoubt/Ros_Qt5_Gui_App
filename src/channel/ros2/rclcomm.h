@@ -12,7 +12,6 @@
 #include "sensor_msgs/msg/image.hpp"
 
 #include <cv_bridge/cv_bridge.h>
-#include <mutex>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include "algorithm.h"
@@ -34,7 +33,6 @@
 #include "tf2_ros/transform_listener.h"
 #include "virtual_channel_node.h"
 #include "topology_msgs/msg/topology_map.hpp"
-#include "agt_robot_interfaces/msg/map_status.hpp"
 #include "agt_robot_interfaces/srv/start_map_edit.hpp"
 #include "agt_robot_interfaces/srv/publish_map_edit.hpp"
 #include "agt_robot_interfaces/srv/cancel_map_edit.hpp"
@@ -59,7 +57,6 @@ class rclcomm : public VirtualChannelNode {
   void local_path_callback(const nav_msgs::msg::Path::SharedPtr msg);
   void robotFootprintCallback(const geometry_msgs::msg::PolygonStamped::SharedPtr msg);
   void topologyMapCallback(const topology_msgs::msg::TopologyMap::SharedPtr msg);
-  void mapStatusCallback(const agt_robot_interfaces::msg::MapStatus::SharedPtr msg);
 
  public:
   bool Start() override;
@@ -107,8 +104,6 @@ class rclcomm : public VirtualChannelNode {
       robot_footprint_subscriber_;
   rclcpp::Subscription<topology_msgs::msg::TopologyMap>::SharedPtr
       topology_map_subscriber_;
-  rclcpp::Subscription<agt_robot_interfaces::msg::MapStatus>::SharedPtr
-      map_status_subscriber_;
   rclcpp::Publisher<topology_msgs::msg::TopologyMap>::SharedPtr
       topology_map_update_publisher_;
   std::vector<rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr> image_subscriber_list_;
@@ -121,9 +116,6 @@ class rclcomm : public VirtualChannelNode {
   rclcpp::CallbackGroup::SharedPtr callback_group_laser;
   rclcpp::CallbackGroup::SharedPtr callback_group_other;
   std::atomic_bool init_flag_{false};
-
-  mutable std::mutex map_status_mutex_;
-  MapPackageStatus map_package_status_;
 
   rclcpp::Client<agt_robot_interfaces::srv::StartMapEdit>::SharedPtr map_edit_start_client_;
   rclcpp::Client<agt_robot_interfaces::srv::PublishMapEdit>::SharedPtr map_edit_publish_client_;
