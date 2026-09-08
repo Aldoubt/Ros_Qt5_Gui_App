@@ -11,6 +11,7 @@
 #include <atomic>
 #include <thread>
 #include "msg/msg_info.h"
+#include "msg/map_edit_workflow.h"
 #include "occupancy_map.h"
 #include "topology_map.h"
 #include "point_type.h"
@@ -54,6 +55,36 @@ class VirtualChannelNode {
   virtual bool IsConnecting() const { return false; }
   virtual bool IsConnectionFailed() const { return false; }
   virtual std::string GetConnectionError() const { return ""; }
+
+  // Transport-neutral V3 map workflow boundary. Non-V3 channels remain usable
+  // and report an explicit unsupported result instead of exposing ROS service
+  // types to MainWindow/SceneManager.
+  virtual void StartMapEdit(const std::string &, const std::string &,
+                            const MapEditSessionCallback &callback) {
+    if (callback) {
+      MapEditSessionResult result;
+      result.message = "map edit workflow is unsupported by this channel";
+      callback(result);
+    }
+  }
+  virtual void PublishMapEdit(const std::string &, const std::string &,
+                              const std::string &, bool,
+                              const MapEditPublishCallback &callback) {
+    if (callback) {
+      MapEditPublishResult result;
+      result.message = "map edit workflow is unsupported by this channel";
+      callback(result);
+    }
+  }
+  virtual void CancelMapEdit(const std::string &session_id,
+                             const MapEditCancelCallback &callback) {
+    if (callback) {
+      MapEditCancelResult result;
+      result.session_id = session_id;
+      result.message = "map edit workflow is unsupported by this channel";
+      callback(result);
+    }
+  }
 
  public:
   int loop_rate_{30};
