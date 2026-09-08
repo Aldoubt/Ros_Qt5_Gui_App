@@ -33,6 +33,9 @@
 #include "tf2_ros/transform_listener.h"
 #include "virtual_channel_node.h"
 #include "topology_msgs/msg/topology_map.hpp"
+#include "agt_robot_interfaces/srv/start_map_edit.hpp"
+#include "agt_robot_interfaces/srv/publish_map_edit.hpp"
+#include "agt_robot_interfaces/srv/cancel_map_edit.hpp"
 #include "core/framework/framework.h"
 
 class rclcomm : public VirtualChannelNode {
@@ -66,6 +69,15 @@ class rclcomm : public VirtualChannelNode {
   basic::RobotPose getTransform(std::string from, std::string to);
   TopologyMap ConvertFromRosMsg(const topology_msgs::msg::TopologyMap::SharedPtr msg);
   topology_msgs::msg::TopologyMap ConvertToRosMsg(const TopologyMap& topology_map);
+
+  void StartMapEdit(const std::string &map_id, const std::string &map_version,
+                    const MapEditSessionCallback &callback) override;
+  void PublishMapEdit(const std::string &session_id,
+                      const std::string &target_map_id,
+                      const std::string &target_map_version, bool activate,
+                      const MapEditPublishCallback &callback) override;
+  void CancelMapEdit(const std::string &session_id,
+                     const MapEditCancelCallback &callback) override;
 
  private:
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr speed_publisher_;
@@ -104,7 +116,9 @@ class rclcomm : public VirtualChannelNode {
   rclcpp::CallbackGroup::SharedPtr callback_group_other;
   std::atomic_bool init_flag_{false};
 
- private:
+  rclcpp::Client<agt_robot_interfaces::srv::StartMapEdit>::SharedPtr map_edit_start_client_;
+  rclcpp::Client<agt_robot_interfaces::srv::PublishMapEdit>::SharedPtr map_edit_publish_client_;
+  rclcpp::Client<agt_robot_interfaces::srv::CancelMapEdit>::SharedPtr map_edit_cancel_client_;
 };
 
 #endif  // RCLCOMM_H
