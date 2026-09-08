@@ -12,6 +12,7 @@
 #include <thread>
 #include "msg/msg_info.h"
 #include "msg/map_edit_workflow.h"
+#include "msg/map_package_status.h"
 #include "occupancy_map.h"
 #include "topology_map.h"
 #include "point_type.h"
@@ -55,6 +56,12 @@ class VirtualChannelNode {
   virtual bool IsConnecting() const { return false; }
   virtual bool IsConnectionFailed() const { return false; }
   virtual std::string GetConnectionError() const { return ""; }
+
+  // Exact active-map context supplied by the system-of-record. Unsupported
+  // channels return an empty snapshot; they never infer identity from a file.
+  virtual MapPackageStatus GetMapPackageStatus() const {
+    return MapPackageStatus{};
+  }
 
   // Transport-neutral V3 map workflow boundary. Non-V3 channels remain usable
   // and report an explicit unsupported result instead of exposing ROS service
